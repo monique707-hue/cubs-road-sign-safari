@@ -9,7 +9,7 @@
     :root{
       --bg:#f6f2e8; --card:#fff; --green:#2f5d50; --green-dark:#24483f;
       --yellow:#f4c95d; --text:#24302c; --muted:#6f7a75; --border:#ded8ca;
-      --danger:#b73d36;
+      --danger:#b73d36; --danger-bg:#faecea;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
@@ -26,8 +26,8 @@
     textarea{min-height:96px;resize:vertical}
     .upload-box{border:2px dashed #bfc8c3;border-radius:16px;padding:16px;background:#fbfaf6}
     .preview{display:none;margin-top:14px;width:100%;max-height:320px;object-fit:contain;border-radius:14px;background:#eef0ec}
-    button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:14px 18px;background:var(--green);color:#fff;font-size:17px;font-weight:700;cursor:pointer}
-    button:hover{background:var(--green-dark)} button:disabled{opacity:.55;cursor:not-allowed}
+    .submit-button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:14px 18px;background:var(--green);color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+    .submit-button:hover{background:var(--green-dark)} .submit-button:disabled{opacity:.55;cursor:not-allowed}
     .status{display:none;margin-top:14px;padding:11px 13px;border-radius:12px;font-size:14px}
     .status.success{display:block;background:#e9f5ed;color:#255c38}.status.error{display:block;background:#f9e7e5;color:var(--danger)}
     .gallery-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:32px 0 14px}
@@ -36,6 +36,8 @@
     .sign-card{background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(30,50,40,.06)}
     .sign-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#eceee9}
     .sign-card-content{padding:15px}.meaning{font-weight:700;font-size:17px;line-height:1.35;margin:0 0 10px}.spotted{margin:0;color:var(--muted);font-size:14px}
+    .delete-button{width:100%;margin-top:14px;border:1px solid #e4b2ae;border-radius:11px;padding:9px 12px;background:var(--danger-bg);color:var(--danger);font-size:14px;font-weight:700;cursor:pointer}
+    .delete-button:hover{background:#f5d9d6}.delete-button:disabled{opacity:.55;cursor:not-allowed}
     .empty{grid-column:1/-1;border:2px dashed #cfc8b9;border-radius:18px;text-align:center;padding:34px 20px;color:var(--muted);background:rgba(255,255,255,.45)}
     .note{margin-top:14px;color:var(--muted);font-size:12px;text-align:center;line-height:1.5}
     @media(max-width:760px){.gallery{grid-template-columns:repeat(2,1fr)}}
@@ -65,7 +67,7 @@
       <label for="spottedBy">Who spotted it?</label>
       <input id="spottedBy" name="spottedBy" type="text" maxlength="50" placeholder="e.g. James" required />
 
-      <button id="submitBtn" type="submit">Add My Road Sign 🚦</button>
+      <button id="submitBtn" class="submit-button" type="submit">Add My Road Sign 🚦</button>
       <div id="status" class="status" role="status"></div>
     </form>
 
@@ -117,16 +119,45 @@ function render(signs){
     gallery.innerHTML = '<div class="empty">No road signs yet — be the first to spot one! 🛑</div>';
     return;
   }
+
   gallery.innerHTML = signs.map(sign => `
     <article class="sign-card">
       <img src="${escapeHtml(sign.image_url)}" alt="Road sign uploaded by ${escapeHtml(sign.spotted_by)}" loading="lazy">
       <div class="sign-card-content">
         <p class="meaning">${escapeHtml(sign.meaning)}</p>
         <p class="spotted">Spotted by: <strong>${escapeHtml(sign.spotted_by)}</strong></p>
+        <button class="delete-button" type="button" data-id="${escapeHtml(sign.id)}">🗑 Delete</button>
       </div>
     </article>
   `).join('');
 }
+
+gallery.addEventListener('click', async event => {
+  const button = event.target.closest('.delete-button');
+  if(!button) return;
+
+  const confirmed = confirm('Delete this road sign? This will also delete the uploaded photo.');
+  if(!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = 'Deleting…';
+
+  try{
+    const response = await fetch(`/api/signs?id=${encodeURIComponent(button.dataset.id)}`, {
+      method: 'DELETE',
+      headers: { 'Accept':'application/json' }
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if(!response.ok) throw new Error(result.error || 'Delete failed');
+
+    await loadSigns();
+  }catch(error){
+    alert(error.message || 'Could not delete this road sign.');
+    button.disabled = false;
+    button.textContent = '🗑 Delete';
+  }
+});
 
 photoInput.addEventListener('change', () => {
   const file = photoInput.files[0];
