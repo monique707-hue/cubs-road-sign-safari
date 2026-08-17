@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
       id: row.id,
       spotted_by: row.spotted_by,
       meaning: row.meaning,
-      image_url: `/images/${encodeURIComponent(row.image_key)}`,
+      iimage_url: `/images/${row.image_key}`,
       created_at: row.created_at
     })));
   } catch (error) {
@@ -99,7 +99,7 @@ export async function onRequestPost(context) {
         id,
         spotted_by: spottedBy,
         meaning,
-        image_url: `/images/${encodeURIComponent(imageKey)}`
+        image_url: `/images/${imageKey}`
       }
     }, 201);
   } catch (error) {
