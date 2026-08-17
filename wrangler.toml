@@ -5,7 +5,7 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "cubs-road-sign-safari"
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "76f16485-f717-439f-ac80-497fbb8759ac"
 
 [[r2_buckets]]
 binding = "SIGN_PHOTOS"
