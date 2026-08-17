@@ -108,6 +108,33 @@ export async function onRequestPost(context) {
   }
 }
 
-export function onRequest(context) {
-  return json({ error: "Method not allowed." }, 405);
+export async function onRequestDelete(context) {
+  try {
+    const url = new URL(context.request.url);
+    const id = cleanText(url.searchParams.get("id"), 100);
+
+    if (!id) {
+      return json({ error: "Missing road sign ID." }, 400);
+    }
+
+    const sign = await context.env.DB.prepare(
+      `SELECT id, image_key FROM signs WHERE id = ? LIMIT 1`
+    ).bind(id).first();
+
+    if (!sign) {
+      return json({ error: "Road sign not found." }, 404);
+    }
+
+    await context.env.SIGN_PHOTOS.delete(sign.image_key);
+
+    await context.env.DB.prepare(
+      `DELETE FROM signs WHERE id = ?`
+    ).bind(id).run();
+
+    return json({ ok: true });
+
+  } catch (error) {
+    console.error(error);
+    return json({ error: "Could not delete that road sign." }, 500);
+  }
 }
