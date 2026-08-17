@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
       id: row.id,
       spotted_by: row.spotted_by,
       meaning: row.meaning,
-      iimage_url: `/images/${row.image_key}`,
+      image_url: `/images/${row.image_key}`,
       created_at: row.created_at
     })));
   } catch (error) {
